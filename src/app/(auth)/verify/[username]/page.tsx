@@ -30,7 +30,7 @@ const VerifyAccount = () => {
         title: "Success",
         description: response.data.message,
       })
-      router.replace("/auth/sign-in");
+      router.replace("/sign-in");
     } catch (error) {
       console.error("Error verifying account", error);
       const axiosError = error as AxiosError<ApiResponse>;
