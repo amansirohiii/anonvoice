@@ -27,11 +27,22 @@ export async function POST(request: Request) {
         const existingUserByEmail = await UserModel.findOne({ email });
         const verifyCode = Math.random().toString(36).substring(2, 8);
         if (existingUserByEmail) {
+            const emailResponse = await sendVerificationEmail(
+                email,
+                username,
+                verifyCode
+            );
+            if (!emailResponse.success) {
+                return Response.json({
+                    success: false,
+                    message: emailResponse.message,
+                }, {status: 500})}
+
             if (existingUserByEmail.isVerified) {
               return Response.json({
-                success: false,
-                message: "User with this email already exists.",
-            }, {status: 500})
+                success: true,
+                message: "OTP sent again. User with this email already exists.",
+            }, {status: 200})
             }
             else{
               const hashedPassword = await bcrypt.hash(password, 10);
