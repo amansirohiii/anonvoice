@@ -43,8 +43,8 @@ export async function POST(request: Request): Promise<Response> {
 
     // Send the verification email
     const emailResponse: ApiResponse = await sendVerificationEmail(
-      username,
       user.email,
+      username,
       verifyCode
     );
 
