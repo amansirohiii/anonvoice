@@ -9,7 +9,7 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -17,7 +17,8 @@ const VerifyAccount = () => {
   const router = useRouter();
   const params = useParams<{ username: string }>();
   const { toast } = useToast();
-
+   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [timer, setTimer] = useState(30);
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
   });
@@ -99,6 +100,46 @@ const VerifyAccount = () => {
     }
   };
 
+
+
+  // Handle OTP resend logic
+  const handleResendOTP = async () => {
+    try {
+      const response = await axios.post(`/api/send-otp`, {
+        username: params.username,
+      });
+      toast({
+        title: "OTP Resent",
+        description: response.data.message,
+      });
+
+      setIsResendDisabled(true); // Disable button for 1 minute
+      setTimer(30); // Reset timer to 60 seconds
+
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
+      toast({
+        title: "Error Resending OTP",
+        description: axiosError.response?.data.message || "Could not resend OTP",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Timer effect to enable button after 1 minute
+  useEffect(() => {
+    let countdown: NodeJS.Timeout;
+    if (isResendDisabled && timer > 0) {
+      countdown = setTimeout(() => {
+        setTimer(timer - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setIsResendDisabled(false);
+    }
+
+    return () => clearTimeout(countdown); // Clear the timeout on unmount
+  }, [isResendDisabled, timer]);
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
@@ -124,6 +165,13 @@ const VerifyAccount = () => {
             <Button type="submit">Verify</Button>
           </form>
         </Form>
+        <div className="text-center mt-4">
+          <Button
+            onClick={handleResendOTP}
+            disabled={isResendDisabled}>
+              Resend OTP {isResendDisabled && `(${timer}s)`}
+          </Button>
+        </div>
       </div>
     </div>
   );
