@@ -21,7 +21,8 @@ export async function POST(request: Request) {
     const isCodeValid = user.verifyCode === code;
     const isCodeNotExpired = new Date(user.verifyCodeExpiry) > new Date();
 
-    if (isCodeValid && isCodeNotExpired) {
+
+    if (isCodeValid && !isCodeNotExpired) {
       // Update the user's verification status
       user.isVerified = true;
       await user.save();
